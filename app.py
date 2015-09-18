@@ -6,14 +6,15 @@ import psycopg2
 from conf import *
 
 """
-How to handle multiple agents ?
+
+How does this work ?
 
 We have two tables :
 
 calls
 +-----------+-----------+-------------------+
 |           |           |                   |
-| callid    | calluuid  |agent_sipusername  |
+| call_id   | calluuid  |agent_sipusername  |
 |           |           |                   |
 |           |           |                   |
 +-----------+-----------+-------------------+
@@ -42,9 +43,7 @@ else:
 when a call is hung up, we check if the call was assigned to an agent ( non-null agent_sipusername field )
 if yes:
     mark the agent in agents table as free
-    pick a free agent and forward the call to agent
-    update the row for that column with sipuername of the agent assigned to the call
-    mark the assigned agent as busy
+    transfer the oldest call to answer_url --> this will execute the new call algorithm above
 delete the hung up call from the database
 
 """
@@ -62,18 +61,12 @@ except:
 
 @app.route("/queuelen", methods=["GET","POST"])
 def queuelen():
-    cursor = execute_query("SELECT count(*) FROM ongoing_calls")
+    cursor = execute_query("SELECT count(*) FROM calls")
     return str(cursor.fetchone()[0])
-
-@app.route("/forward", methods=['POST', 'GET'])
-def forward():
-    return generate_forward_response()
-
 
 @app.route("/agent", methods=["GET", "POST"])
 def agent():
     return render_template("agent_page.html")
-
 
 @app.route("/answer", methods=['POST', 'GET'])
 def answer():
@@ -81,49 +74,44 @@ def answer():
         return "You reached call center answer url"
 
     callUuid = request.form['CallUUID']
-    cursor = execute_query("SELECT * from ongoing_calls")
-    rows = cursor.fetchall()
-    if (len(rows) == 0):
-        response = generate_forward_response()
-        active = 'true'
+    cursor = execute_query("SELECT * from agents WHERE busy='false'")
+    if (cursor.rowcount > 0):
+        free_agent_sip_username = get_free_agent()
+        mark_agent_busy(free_agent_sip_username)
+        response = generate_forward_response(free_agent_sip_username)
     else:
         # Put it in queue
-        plivo_response = plivo.XML.Response()
-        plivo_response.addSpeak("Our agent is busy. Please hold on")
-        plivo_response.addPlay('https://s3.amazonaws.com/plivocloud/music.mp3', loop=1)
-        response = make_response(render_template('response_template.xml', response=plivo_response))
-        response.headers['content-type'] = 'text/xml'
-        active = 'false'
-    execute_query("INSERT INTO ongoing_calls (from_number, active, calluuid) VALUES('{}', '{}', '{}');".format(
-        request.form['From'], active, callUuid))
+        free_agent_sip_username= None
+        response = generate_queue_response()
+    if free_agent_sip_username is None:
+        execute_query("INSERT INTO calls (calluuid, agent_sipusername) VALUES('{}', {});".format(callUuid, "NULL"))
+    else:
+        execute_query("INSERT INTO calls (calluuid, agent_sipusername) VALUES('{}', '{}');".format(callUuid, free_agent_sip_username))
     return response
-
 
 @app.route("/hangup", methods=['POST', 'GET'])
 def hangup():
     if request.method == "GET":
         return "You have reached the call center hangup url"
-
-    active_calls_from_number_cursor = execute_query(
-        "select * from ongoing_calls where from_number='{}' AND active=true;".format(request.form['From']))
-    rows = active_calls_from_number_cursor.fetchall()
-    active_calls_from_number_cursor.close()
-    if (len(rows) != 0):
-        # hung up call is the active one, transfer the first incoming call to agent
-        transfer_call_cur = execute_query("SELECT calluuid FROM ongoing_calls WHERE active=false ORDER BY id")
-        uuid_row = transfer_call_cur.fetchone()
-        if not uuid_row is None:
-            uuid = uuid_row[0]
+    callUuid = request.form['CallUUID']
+    cursor = execute_query("SELECT agent_sipusername FROM calls WHERE calluuid='{}' AND agent_sipusername IS NOT NULL".format(callUuid))
+    if cursor.rowcount > 0:
+        # Hung up call was being handled by an agent. Mark him/her free
+        agent_sipusername = cursor.fetchone()[0]
+        execute_query("UPDATE agents SET busy='false' WHERE sipusername = '{}'".format(agent_sipusername))
+        transfer_calluuid_cursor = execute_query("SELECT calluuid FROM calls WHERE calluuid not like '{}' AND agent_sipusername IS NULL ORDER BY id".format(callUuid))
+        if transfer_calluuid_cursor.rowcount > 0:
+            # There is atleast one call that is in queue
+            transfer_calluuid = transfer_calluuid_cursor.fetchone()[0]
             params = {
-                'call_uuid': uuid,
-                'aleg_url': APP_URL + url_for("forward")
+                'call_uuid': transfer_calluuid,
+                'aleg_url': APP_URL + url_for("answer")
             }
-            p.transfer_call(params)
-            # Mark the call active
-            execute_query("UPDATE ongoing_calls SET active=true WHERE calluuid = '{}'".format(uuid))
-
-    # Delete the call from the database, it was hung up
-    execute_query("DELETE FROM ongoing_calls WHERE from_number ='{}'".format(request.form['From']))
+            response = p.transfer_call(params)
+            # Transferred call will get new uuid, So delete current one
+            execute_query("DELETE FROM calls WHERE calluuid ='{}'".format(transfer_calluuid))
+    # Delete the original call from the database, It was hung up
+    execute_query("DELETE FROM calls WHERE calluuid ='{}'".format(callUuid))
     return ""
 
 def execute_query(query):
@@ -132,11 +120,26 @@ def execute_query(query):
     conn.commit()
     return cursor
 
-def generate_forward_response():
+def generate_forward_response(sip_username):
     return """<Response>
                     <Dial callerId="{}">
                         <User>sip:{}@phone.plivo.com</User>
                     </Dial>
-               </Response>""".format(request.form['From'], SIP_USERNAME)
+               </Response>""".format(request.form['From'], sip_username)
+
+def generate_queue_response():
+    plivo_response = plivo.XML.Response()
+    plivo_response.addSpeak("Our agents are busy. Please hold on")
+    plivo_response.addPlay('https://s3.amazonaws.com/plivocloud/music.mp3', loop=1)
+    response = make_response(render_template('response_template.xml', response=plivo_response))
+    response.headers['content-type'] = 'text/xml'
+    return response
+
+def get_free_agent():
+    cursor = execute_query("SELECT sipusername FROM agents where busy='false'")
+    return cursor.fetchone()[0]
+
+def mark_agent_busy(free_agent_sip_username):
+    execute_query("UPDATE agents SET busy='true' WHERE sipusername='{}'".format(free_agent_sip_username))
 
 app.run(host="0.0.0.0")

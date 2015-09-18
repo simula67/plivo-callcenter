@@ -1,6 +1,6 @@
 import os
 
-APP_URL = "http://a1eb398b.ngrok.io"
+APP_URL = "http://5b58e10c.ngrok.io"
 
 # Plivo Auth ID and Auth Token
 PLIVO_AUTH_ID = os.environ.get('PLIVO_AUTH_ID')

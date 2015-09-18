@@ -14,7 +14,8 @@ How to run ?
 2. Install dependencies
 3. Create the tables necessary by running the following command(s)
 
-    create table ongoing_calls ( id SERIAL PRIMARY KEY, calluuid VARCHAR(36), from_number VARCHAR(15), active boolean );
+    create table calls ( id SERIAL PRIMARY KEY, calluuid VARCHAR(36), agent_sipusername VARCHAR(40) );
+    create table agents ( id SERIAL PRIMARY KEY, sipusername VARCHAR(40), busy boolean );
 
 4. Set credentials like authentication token etc in environment variables
 5. Run app.py
