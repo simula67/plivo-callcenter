@@ -32,12 +32,10 @@ src/
 *.un~
 Session.vim
 .netrwhist
-*~
 
 
 ### Emacs ###
 # -*- mode: gitignore; -*-
-*~
 \#*\#
 /.emacs.desktop
 /.emacs.desktop.lock
@@ -170,7 +168,6 @@ coverage.xml
 *.pot
 
 # Django stuff:
-*.log
 
 # Sphinx documentation
 docs/_build/
