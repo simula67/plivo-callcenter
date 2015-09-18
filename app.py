@@ -1,9 +1,54 @@
 #!/usr/bin/python2
 
 from flask import Flask, render_template, request, make_response, url_for
-import plivo, plivoxml
+import plivo
 import psycopg2
 from conf import *
+
+"""
+How to handle multiple agents ?
+
+We have two tables :
+
+calls
++-----------+-----------+-------------------+
+|           |           |                   |
+| callid    | calluuid  |agent_sipusername  |
+|           |           |                   |
+|           |           |                   |
++-----------+-----------+-------------------+
+
+agents
++-----------+-------------+-------+
+|           |             |       |
+|           |             |       |
+|agent_id   |sipusername  | busy  |
+|           |             |       |
+|           |             |       |
++-----------+-------------+-------+
+
+
+agents table is prepopulated by admin
+
+when new calls come in, we check if there is at least one agent free
+if yes:
+    pick a free agent and forward the call to agent
+    insert new row into calls table with sipusername set to assigned agent
+    mark the assigned agent in agents table as busy
+else:
+    insert new row into calls table with null agent_sipusername
+    put the caller in wait mode
+
+when a call is hung up, we check if the call was assigned to an agent ( non-null agent_sipusername field )
+if yes:
+    mark the agent in agents table as free
+    pick a free agent and forward the call to agent
+    update the row for that column with sipuername of the agent assigned to the call
+    mark the assigned agent as busy
+delete the hung up call from the database
+
+"""
+
 
 app = Flask(__name__)
 app.debug = True
