@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Page</title>
+</head>
+<body>
+
+Average duration of calls is {{ average_duration }}
+<br />
+<br />
+Available SIP usernames for agents
+<ol>
+    {% for sip in sips %}
+    <li>{{ sip }}</li>
+    {% endfor %}
+
+</ol>
+<form action="/admin" method="POST">
+    Create a new SIP Username: <input type="text" name="sipusername">
+    <input type="submit" value="Submit">
+</form>
+
+</body>
+</html>

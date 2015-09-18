@@ -1,6 +1,6 @@
 #!/usr/bin/python2
 
-from flask import Flask, render_template, request, make_response, url_for
+from flask import Flask, render_template, request, make_response, url_for, redirect
 import plivo
 import psycopg2
 from conf import *
@@ -89,11 +89,26 @@ def answer():
         execute_query("INSERT INTO calls (calluuid, agent_sipusername) VALUES('{}', '{}');".format(callUuid, free_agent_sip_username))
     return response
 
+@app.route("/admin", methods=['POST', 'GET'])
+def admin():
+    if request.method == "GET":
+        average_duration = execute_query("SELECT avg(DURATION) FROM call_stats;").fetchone()[0]
+        available_sips = execute_query("SELECT sipusername FROM agents").fetchall()
+        return render_template("admin_page.html", average_duration=average_duration, sips=available_sips)
+    elif request.method == "POST":
+        execute_query("INSERT INTO agents (sipusername, busy) VALUES ('{}', 'false')".format(request.form['sipusername']))
+        return redirect(url_for('admin'))
+
+
+
 @app.route("/hangup", methods=['POST', 'GET'])
 def hangup():
     if request.method == "GET":
         return "You have reached the call center hangup url"
     callUuid = request.form['CallUUID']
+    call_duration = request.form['Duration']
+    # First, lets store some stats
+    execute_query("INSERT INTO call_stats (duration) VALUES ({})".format(call_duration))
     cursor = execute_query("SELECT agent_sipusername FROM calls WHERE calluuid='{}' AND agent_sipusername IS NOT NULL".format(callUuid))
     if cursor.rowcount > 0:
         # Hung up call was being handled by an agent. Mark him/her free
@@ -107,7 +122,7 @@ def hangup():
                 'call_uuid': transfer_calluuid,
                 'aleg_url': APP_URL + url_for("answer")
             }
-            response = p.transfer_call(params)
+            p.transfer_call(params)
             # Transferred call will get new uuid, So delete current one
             execute_query("DELETE FROM calls WHERE calluuid ='{}'".format(transfer_calluuid))
     # Delete the original call from the database, It was hung up

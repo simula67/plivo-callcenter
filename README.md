@@ -16,6 +16,7 @@ How to run ?
 
     create table calls ( id SERIAL PRIMARY KEY, calluuid VARCHAR(36), agent_sipusername VARCHAR(40) );
     create table agents ( id SERIAL PRIMARY KEY, sipusername VARCHAR(40), busy boolean );
+    create table call_stats ( id SERIAL PRIMARY KEY, duration INTEGER );
 
 4. Set credentials like authentication token etc in environment variables
 5. Run app.py
