@@ -32,6 +32,15 @@
 
     <script type="text/javascript">
 
+                function setNumberOfOngoingCallsText(data) {
+                    $('#numcalls').text(data);
+                }
+
+                function setNumberOfOngoingCalls() {
+                    $.post( "/queuelen" , null, setNumberOfOngoingCallsText );
+                    setTimeout(setNumberOfOngoingCalls, 5000);
+                }
+
                 function webrtcNotSupportedAlert() {
                     $('#txtStatus').text("");
                     alert("Your browser doesn't support WebRTC. You need Chrome 25 to use this demo");
@@ -247,8 +256,9 @@
                     Plivo.onIncomingCall = onIncomingCall;
                     Plivo.onIncomingCallCanceled = onIncomingCallCanceled;
                     Plivo.init();
-
+                    setNumberOfOngoingCalls();
                 });
+
 
             </script>
 
@@ -265,6 +275,8 @@
 
             <h4>Agent Softphone Login</h4>
             <p>Login from your browser using the Plivo Endpoint credentials</p>
+
+            <p> Number of ongoing calls : <span id="numcalls">0</span></p>
 
             <hr>
 

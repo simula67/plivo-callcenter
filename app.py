@@ -15,6 +15,10 @@ try:
 except:
     print "I am unable to connect to the database"
 
+@app.route("/queuelen", methods=["GET","POST"])
+def queuelen():
+    cursor = execute_query("SELECT count(*) FROM ongoing_calls")
+    return str(cursor.fetchone()[0])
 
 @app.route("/forward", methods=['POST', 'GET'])
 def forward():
