@@ -31,11 +31,10 @@ def agent():
 def answer():
     if request.method == "GET":
         return "You reached call center answer url"
+
     callUuid = request.form['CallUUID']
-    print callUuid
-    cur = conn.cursor()
-    cur.execute("SELECT * from ongoing_calls")
-    rows = cur.fetchall()
+    cursor = execute_query("SELECT * from ongoing_calls")
+    rows = cursor.fetchall()
     if(len(rows) == 0):
         response = """<Response>
                         <Dial callerId="{}">
@@ -51,10 +50,7 @@ def answer():
         response = make_response(render_template('response_template.xml', response=plivo_response))
         response.headers['content-type'] = 'text/xml'
         active = 'false'
-    insert_cursor = conn.cursor()
-    insert_new_sql = "INSERT INTO ongoing_calls (from_number, active, calluuid) VALUES('{}', '{}', '{}');".format(request.form['From'], active, callUuid)
-    insert_cursor.execute(insert_new_sql)
-    conn.commit()
+    execute_query("INSERT INTO ongoing_calls (from_number, active, calluuid) VALUES('{}', '{}', '{}');".format(request.form['From'], active, callUuid))
     return response
 
 @app.route("/hangup", methods=['POST', 'GET'])
@@ -62,35 +58,31 @@ def hangup():
     if request.method == "GET":
         return "You have reached the call center hangup url"
 
-    is_active_call_sql = "select * from ongoing_calls where from_number='{}' AND active=true;".format(request.form['From'])
-    cur = conn.cursor()
-    cur.execute(is_active_call_sql)
-    rows = cur.fetchall()
-    cur.close()
-    conn.commit()
+    active_calls_from_number_cursor = execute_query("select * from ongoing_calls where from_number='{}' AND active=true;".format(request.form['From']))
+    rows = active_calls_from_number_cursor.fetchall()
+    active_calls_from_number_cursor.close()
     if(len(rows) != 0):
         # hung up call is the active one, transfer the first call to agent
-        transfer_call_uuid_sql = "SELECT calluuid FROM ongoing_calls WHERE active=false ORDER BY id"
-        transfer_call_cur = conn.cursor()
-        transfer_call_cur.execute(transfer_call_uuid_sql)
+        transfer_call_cur = execute_query("SELECT calluuid FROM ongoing_calls WHERE active=false ORDER BY id")
         uuid_row = transfer_call_cur.fetchone()
-        uuid = uuid_row[0]
-        params = {
-            'call_uuid' : uuid,
-            'aleg_url': APP_URL + url_for("forward")
-        }
-        p.transfer_call(params)
-        # Mark the call active
-        update_table_sql = "UPDATE ongoing_calls SET active=true WHERE calluuid = {}".format(uuid)
-        update_table_cursor = conn.cursor()
-        update_table_cursor.execute(update_table_sql)
-        conn.commit()
+        if not uuid_row is None:
+            uuid = uuid_row[0]
+            params = {
+                'call_uuid' : uuid,
+                'aleg_url': APP_URL + url_for("forward")
+            }
+            p.transfer_call(params)
+            # Mark the call active
+            execute_query("UPDATE ongoing_calls SET active=true WHERE calluuid = '{}'".format(uuid))
 
     # Delete the call from the database, it was hung up
-    delete_sql = "DELETE FROM ongoing_calls WHERE from_number ='{}'".format(request.form['From'])
-    delete_cur = conn.cursor()
-    delete_cur.execute(delete_sql)
-    conn.commit()
+    execute_query("DELETE FROM ongoing_calls WHERE from_number ='{}'".format(request.form['From']))
     return ""
+
+def execute_query(query):
+    cursor = conn.cursor()
+    cursor.execute(query)
+    conn.commit()
+    return cursor
 
 app.run(host="0.0.0.0")
