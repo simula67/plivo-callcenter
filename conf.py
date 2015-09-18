@@ -9,3 +9,4 @@ PLIVO_AUTH_TOKEN = os.environ.get('PLIVO_AUTH_TOKEN')
 DB_HOST="localhost"
 DB_NAME="plivo"
 DB_PASSWD=os.environ.get('DB_PASSWD')
+SIP_USERNAME = "simula67150918103656"
