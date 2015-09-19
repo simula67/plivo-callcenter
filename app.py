@@ -157,4 +157,4 @@ def get_free_agent():
 def mark_agent_busy(free_agent_sip_username):
     execute_query("UPDATE agents SET busy='true' WHERE sipusername='{}'".format(free_agent_sip_username))
 
-app.run(host="0.0.0.0", port=os.environ.get("PORT"))
+app.run(host="0.0.0.0", port=int(os.environ.get("PORT")))
