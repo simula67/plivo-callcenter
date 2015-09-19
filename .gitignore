@@ -175,5 +175,3 @@ docs/_build/
 # PyBuilder
 target/
 
-# VirtualEnv
-callcentervenv/

@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/env python
 
 from flask import Flask, render_template, request, make_response, url_for, redirect
 import plivo
