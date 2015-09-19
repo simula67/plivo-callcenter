@@ -50,7 +50,7 @@ delete the hung up call from the database
 
 
 app = Flask(__name__)
-app.debug = True
+app.debug = False
 p = plivo.RestAPI(PLIVO_AUTH_ID, PLIVO_AUTH_TOKEN)
 
 # TODO: Use SQLAlchemy
