@@ -55,7 +55,7 @@ p = plivo.RestAPI(PLIVO_AUTH_ID, PLIVO_AUTH_TOKEN)
 
 # TODO: Use SQLAlchemy
 try:
-    conn = psycopg2.connect("dbname='{}' user='postgres' host='{}' password='{}'".format(DB_NAME, DB_HOST, DB_PASSWD))
+    conn = psycopg2.connect("dbname='{}' user='{}' host='{}' password='{}'".format(DB_USERNAME, DB_NAME, DB_HOST, DB_PASSWD))
 except psycopg2.Error as e:
     print "I am unable to connect to the database :{}".format(e) 
 
