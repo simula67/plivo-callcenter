@@ -10,6 +10,7 @@ Demo
 ====
 
 https://plivocallcenter.herokuapp.com/admin
+
 https://plivocallcenter.herokuapp.com/agent
 
 How to run ?
@@ -17,11 +18,11 @@ How to run ?
 
 1. Install dependencies
 2. Create the tables necessary by running the following command(s)
-
-    create table calls ( id SERIAL PRIMARY KEY, calluuid VARCHAR(36), agent_sipusername VARCHAR(40) );
-    create table agents ( id SERIAL PRIMARY KEY, sipusername VARCHAR(40), busy boolean );
-    create table call_stats ( id SERIAL PRIMARY KEY, duration INTEGER );
-
+```
+create table calls ( id SERIAL PRIMARY KEY, calluuid VARCHAR(36), agent_sipusername VARCHAR(40) );
+create table agents ( id SERIAL PRIMARY KEY, sipusername VARCHAR(40), busy boolean );   
+create table call_stats ( id SERIAL PRIMARY KEY, duration INTEGER );
+```
 3. Set credentials like authentication token, database password and configuration values in environment variables
 4. Run app.py
 
