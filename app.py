@@ -59,23 +59,14 @@ try:
 except:
     print "I am unable to connect to the database"
 
-@app.route("/queuelen", methods=["GET","POST"])
-def queuelen():
-    cursor = execute_query("SELECT count(*) FROM calls")
-    return str(cursor.fetchone()[0])
-
-@app.route("/agent", methods=["GET", "POST"])
-def agent():
-    return render_template("agent_page.html")
-
 @app.route("/answer", methods=['POST', 'GET'])
 def answer():
     if request.method == "GET":
         return "You reached call center answer url"
 
-    callUuid = request.form['CallUUID']
+    call_uuid = request.form['CallUUID']
     cursor = execute_query("SELECT * from agents WHERE busy='false'")
-    if (cursor.rowcount > 0):
+    if cursor.rowcount > 0:
         free_agent_sip_username = get_free_agent()
         mark_agent_busy(free_agent_sip_username)
         response = generate_forward_response(free_agent_sip_username)
@@ -84,37 +75,26 @@ def answer():
         free_agent_sip_username= None
         response = generate_queue_response()
     if free_agent_sip_username is None:
-        execute_query("INSERT INTO calls (calluuid, agent_sipusername) VALUES('{}', {});".format(callUuid, "NULL"))
+        execute_query("INSERT INTO calls (calluuid, agent_sipusername) VALUES('{}', {});".format(call_uuid, "NULL"))
     else:
-        execute_query("INSERT INTO calls (calluuid, agent_sipusername) VALUES('{}', '{}');".format(callUuid, free_agent_sip_username))
+        execute_query("INSERT INTO calls (calluuid, agent_sipusername) VALUES('{}', '{}');".format(call_uuid, free_agent_sip_username))
     return response
-
-@app.route("/admin", methods=['POST', 'GET'])
-def admin():
-    if request.method == "GET":
-        average_duration = execute_query("SELECT avg(DURATION) FROM call_stats;").fetchone()[0]
-        available_sips = execute_query("SELECT sipusername FROM agents").fetchall()
-        return render_template("admin_page.html", average_duration=average_duration, sips=available_sips)
-    elif request.method == "POST":
-        execute_query("INSERT INTO agents (sipusername, busy) VALUES ('{}', 'false')".format(request.form['sipusername']))
-        return redirect(url_for('admin'))
-
-
 
 @app.route("/hangup", methods=['POST', 'GET'])
 def hangup():
     if request.method == "GET":
         return "You have reached the call center hangup url"
-    callUuid = request.form['CallUUID']
+    call_uuid = request.form['CallUUID']
     call_duration = request.form['Duration']
     # First, lets store some stats
     execute_query("INSERT INTO call_stats (duration) VALUES ({})".format(call_duration))
-    cursor = execute_query("SELECT agent_sipusername FROM calls WHERE calluuid='{}' AND agent_sipusername IS NOT NULL".format(callUuid))
+    # Now on with business
+    cursor = execute_query("SELECT agent_sipusername FROM calls WHERE calluuid='{}' AND agent_sipusername IS NOT NULL".format(call_uuid))
     if cursor.rowcount > 0:
         # Hung up call was being handled by an agent. Mark him/her free
         agent_sipusername = cursor.fetchone()[0]
         execute_query("UPDATE agents SET busy='false' WHERE sipusername = '{}'".format(agent_sipusername))
-        transfer_calluuid_cursor = execute_query("SELECT calluuid FROM calls WHERE calluuid not like '{}' AND agent_sipusername IS NULL ORDER BY id".format(callUuid))
+        transfer_calluuid_cursor = execute_query("SELECT calluuid FROM calls WHERE calluuid not like '{}' AND agent_sipusername IS NULL ORDER BY id".format(call_uuid))
         if transfer_calluuid_cursor.rowcount > 0:
             # There is atleast one call that is in queue
             transfer_calluuid = transfer_calluuid_cursor.fetchone()[0]
@@ -126,21 +106,34 @@ def hangup():
             # Transferred call will get new uuid, So delete current one
             execute_query("DELETE FROM calls WHERE calluuid ='{}'".format(transfer_calluuid))
     # Delete the original call from the database, It was hung up
-    execute_query("DELETE FROM calls WHERE calluuid ='{}'".format(callUuid))
+    execute_query("DELETE FROM calls WHERE calluuid ='{}'".format(call_uuid))
     return ""
 
-def execute_query(query):
-    cursor = conn.cursor()
-    cursor.execute(query)
-    conn.commit()
-    return cursor
+@app.route("/queuelen", methods=["GET","POST"])
+def queuelen():
+    cursor = execute_query("SELECT count(*) FROM calls")
+    return str(cursor.fetchone()[0])
+
+@app.route("/agent", methods=["GET", "POST"])
+def agent():
+    return render_template("agent_page.html")
+
+@app.route("/admin", methods=['POST', 'GET'])
+def admin():
+    if request.method == "GET":
+        average_duration = execute_query("SELECT avg(DURATION) FROM call_stats;").fetchone()[0]
+        available_sips = execute_query("SELECT sipusername FROM agents").fetchall()
+        return render_template("admin_page.html", average_duration=average_duration, sips=available_sips)
+    elif request.method == "POST":
+        execute_query("INSERT INTO agents (sipusername, busy) VALUES ('{}', 'false')".format(request.form['sipusername']))
+        return redirect(url_for('admin'))
 
 def generate_forward_response(sip_username):
-    return """<Response>
-                    <Dial callerId="{}">
-                        <User>sip:{}@phone.plivo.com</User>
-                    </Dial>
-               </Response>""".format(request.form['From'], sip_username)
+    plivo_response = plivo.XML.Response()
+    plivo_response.addDial(callerId=request.form['From']).addUser("sip:" + sip_username + "@phone.plivo.com")
+    response = make_response(render_template('response_template.xml', response=plivo_response))
+    response.headers['content-type'] = 'text/xml'
+    return response
 
 def generate_queue_response():
     plivo_response = plivo.XML.Response()
@@ -149,6 +142,12 @@ def generate_queue_response():
     response = make_response(render_template('response_template.xml', response=plivo_response))
     response.headers['content-type'] = 'text/xml'
     return response
+
+def execute_query(query):
+    cursor = conn.cursor()
+    cursor.execute(query)
+    conn.commit()
+    return cursor
 
 def get_free_agent():
     cursor = execute_query("SELECT sipusername FROM agents where busy='false'")
