@@ -6,6 +6,11 @@ Agents can receive calls by going to /agent URL. When clients call the number as
 calls are forwarded to the agent. If there are more than one caller, they are put on hold until the call currently being
 handled is hung up.
 
+Demo
+====
+
+https://plivocallcenter.herokuapp.com/admin
+https://plivocallcenter.herokuapp.com/agent
 
 How to run ?
 ============
