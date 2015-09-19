@@ -18,6 +18,9 @@ Call center number : +1 8552110703
 How to run ?
 ============
 
+Run the application
+-------------------
+
 1. Install dependencies
 2. Create the tables necessary by running the following command(s)
 ```
@@ -27,6 +30,17 @@ create table call_stats ( id SERIAL PRIMARY KEY, duration INTEGER );
 ```
 3. Set credentials like authentication token, database password and configuration values in environment variables
 4. Run app.py
+
+Configure Plivo Application
+----------------------------
+1. Create an application in Plivo
+2. Set the answer URL and hangup URL to that of "/answer" and "/hangup" of the hosted application created in the above subsection 
+3. Buy a number from Plivo and assign it to the Plivo application created above
+
+
+After this you can buy sip endpoints from Plivo and insert it into the call center application from the admin page.
+Calls made to the number bought from Plivo will get forwarded to the agents.
+Please note that when usernames are inserted into the database, calls are made to sip://username@phone.plivo.com.
 
 Some screenshots
 ================
