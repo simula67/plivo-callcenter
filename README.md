@@ -21,3 +21,15 @@ How to run ?
 4. Set credentials like authentication token etc in environment variables
 5. Run app.py
 
+Some screenshots
+================
+
+Admin page
+
+![Admin page](http://i.imgur.com/U8HMMaZ.png)
+
+Agent page
+
+![Agent page](http://i.imgur.com/pILGs8Y.png)
+
+
