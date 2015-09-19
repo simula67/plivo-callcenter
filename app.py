@@ -122,7 +122,8 @@ def agent():
 def admin():
     if request.method == "GET":
         average_duration = execute_query("SELECT avg(DURATION) FROM call_stats;").fetchone()[0]
-        available_sips = execute_query("SELECT sipusername FROM agents").fetchall()
+        available_sip_rows = execute_query("SELECT sipusername FROM agents").fetchall()
+        available_sips = [i[0] for i in available_sip_rows]
         return render_template("admin_page.html", average_duration=average_duration, sips=available_sips)
     elif request.method == "POST":
         execute_query("INSERT INTO agents (sipusername, busy) VALUES ('{}', 'false')".format(request.form['sipusername']))

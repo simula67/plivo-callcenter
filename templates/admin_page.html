@@ -2,24 +2,54 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Page</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="http://getbootstrap.com/examples/dashboard/dashboard.css">
+    <title>Admin Dashboard</title>
 </head>
 <body>
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">Call Center</a>
+        </div>
+    </div>
+</nav>
 
-Average duration of calls is {{ average_duration }}
-<br />
-<br />
-Available SIP usernames for agents
-<ol>
-    {% for sip in sips %}
-    <li>{{ sip }}</li>
-    {% endfor %}
 
-</ol>
+<h1>Administration Dashboard</h1>
+
+<p>Average duration of calls is {{ average_duration }}</p>
+
+<h2 class="sub-header">SIP usernames currently being used by the Call Center</h2>
+
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>SIP Username</th>
+    </tr>
+    </thead>
+    <tbody>
+
+        {% for sip in sips %}
+        <tr>
+        <td>{{ sip }}</td>
+        </tr>
+        {% endfor %}
+
+    </tbody>
+</table>
+
+
 <form action="/admin" method="POST">
     Create a new SIP Username: <input type="text" name="sipusername">
     <input type="submit" value="Submit">
 </form>
 
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 </body>
 </html>
