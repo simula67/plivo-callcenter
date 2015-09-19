@@ -1,6 +1,6 @@
 import os
 
-APP_URL = "plivocallcenter.herokuapp.com"
+APP_URL = os.environ.get('APP_URL')
 
 # Plivo Auth ID and Auth Token
 PLIVO_AUTH_ID = os.environ.get('PLIVO_AUTH_ID')

@@ -10,16 +10,15 @@ handled is hung up.
 How to run ?
 ============
 
-1. Set the APP_URL, DB_HOST and DB_NAME in conf.py
-2. Install dependencies
-3. Create the tables necessary by running the following command(s)
+1. Install dependencies
+2. Create the tables necessary by running the following command(s)
 
     create table calls ( id SERIAL PRIMARY KEY, calluuid VARCHAR(36), agent_sipusername VARCHAR(40) );
     create table agents ( id SERIAL PRIMARY KEY, sipusername VARCHAR(40), busy boolean );
     create table call_stats ( id SERIAL PRIMARY KEY, duration INTEGER );
 
-4. Set credentials like authentication token etc in environment variables
-5. Run app.py
+3. Set credentials like authentication token, database password and configuration values in environment variables
+4. Run app.py
 
 Some screenshots
 ================
