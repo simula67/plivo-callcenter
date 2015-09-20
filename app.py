@@ -126,7 +126,7 @@ def admin():
         available_sips = [i[0] for i in available_sip_rows]
         return render_template("admin_page.html", average_duration=average_duration, sips=available_sips)
     elif request.method == "POST":
-        execute_query("INSERT INTO agents (sipusername, busy) VALUES ('%s', 'false')", request.form['sipusername'])
+        execute_query("INSERT INTO agents (sipusername, busy) VALUES (%s, 'false')", request.form['sipusername'])
         return redirect(url_for('admin'))
 
 def generate_forward_response(sip_username):
