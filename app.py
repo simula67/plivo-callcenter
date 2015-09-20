@@ -74,10 +74,7 @@ def answer():
         # Put it in queue
         free_agent_sip_username= None
         response = generate_queue_response()
-    if free_agent_sip_username is None:
-        execute_query("INSERT INTO calls (calluuid, agent_sipusername) VALUES(%s, %s);", call_uuid, "NULL")
-    else:
-        execute_query("INSERT INTO calls (calluuid, agent_sipusername) VALUES(%s, %s);", call_uuid, free_agent_sip_username)
+    execute_query("INSERT INTO calls (calluuid, agent_sipusername) VALUES(%s, %s);", call_uuid, free_agent_sip_username)
     return response
 
 @app.route("/hangup", methods=['POST', 'GET'])
