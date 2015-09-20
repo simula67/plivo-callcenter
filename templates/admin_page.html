@@ -10,7 +10,10 @@
     <title>Admin Dashboard</title>
     <script>
         function deleteAgent(event) {
-            console.log(event);
+            var agentUsername = event.target.parentElement.parentElement.childNodes[1].textContent;
+            $.post( "/admin/deleteagent", { 'agentUsername': agentUsername }, function() { window.location = "/admin"; } );
+            console.log("Deleting " + agentUsername );
+
         }
     </script>
 </head>
@@ -43,7 +46,7 @@
         {% for sip in sips %}
         <tr>
             <td>{{ sip }}</td>
-            <td><button class="btn btn-danger" onclick="deleteAgent(event)"></button> </td>
+            <td><button class="btn btn-danger" onclick="deleteAgent(event)">Delete</button> </td>
         </tr>
         {% endfor %}
 

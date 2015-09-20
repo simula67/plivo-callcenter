@@ -126,9 +126,13 @@ def admin():
         available_sips = [i[0] for i in available_sip_rows]
         return render_template("admin_page.html", average_duration=average_duration, sips=available_sips)
     elif request.method == "POST":
-        execute_query("INSERT INTO agents (sipusername, busy) VALUES (%s, 'false')", request.form['sipusername'])
+        execute_query("INSERT INTO agents (sipusername, busy) VALUES ('{}', 'false')".format(request.form['sipusername']))
         return redirect(url_for('admin'))
 
+@app.route("/admin/deleteagent", methods=['POST', 'GET'])
+def delete_agent():
+    execute_query("DELETE FROM agents WHERE sipusername='{}'".format(request.form['agentUsername']))
+    return ""
 def generate_forward_response(sip_username):
     plivo_response = plivo.XML.Response()
     plivo_response.addDial(callerId=request.form['From']).addUser("sip:" + sip_username + "@phone.plivo.com")
