@@ -87,7 +87,7 @@ def hangup():
     call_uuid = request.form['CallUUID']
     call_duration = request.form['Duration']
     # First, lets store some stats
-    execute_query("INSERT INTO call_stats (duration) VALUES (%d)", call_duration)
+    execute_query("INSERT INTO call_stats (duration) VALUES (%s)", call_duration)
     # Now on with business
     cursor = execute_query("SELECT agent_sipusername FROM calls WHERE calluuid='{}' AND agent_sipusername IS NOT NULL".format(call_uuid))
     if cursor.rowcount > 0:
