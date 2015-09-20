@@ -99,7 +99,8 @@ def hangup():
                 'call_uuid': transfer_calluuid,
                 'aleg_url': APP_URL + url_for("answer")
             }
-            p.transfer_call(params)
+            response = p.transfer_call(params)
+            print str(response)
             # Transferred call will get new uuid, So delete current one
             execute_query("DELETE FROM calls WHERE calluuid =%s",transfer_calluuid)
     # Delete the original call from the database, It was hung up
