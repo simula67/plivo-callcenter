@@ -15,6 +15,7 @@
             console.log("Deleting " + agentUsername );
 
         }
+
     </script>
 </head>
 <body>
@@ -25,40 +26,48 @@
         </div>
     </div>
 </nav>
+<div class="container">
 
+    <h1>Administration Dashboard</h1>
+    {% if average_duration %}
+    <p>Average duration of calls is {{ average_duration }}</p>
+    {% else %}
+    <p>There are no call stats available</p>
+    {% endif %}
+    <h2 class="sub-header">SIP usernames currently being used by the Call Center</h2>
 
-<h1>Administration Dashboard</h1>
-{% if average_duration %}
-<p>Average duration of calls is {{ average_duration }}</p>
-{% else %}
-<p>There are no call stats available</p>
-{% endif %}
-<h2 class="sub-header">SIP usernames currently being used by the Call Center</h2>
-
-<table class="table table-striped">
-    <thead>
-    <tr>
-        <th>SIP Username</th>
-    </tr>
-    </thead>
-    <tbody>
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>SIP Username</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
 
         {% for sip in sips %}
         <tr>
             <td>{{ sip }}</td>
-            <td><button class="btn btn-danger" onclick="deleteAgent(event)">Delete</button> </td>
+            <td>
+                <button class="btn btn-danger" onclick="deleteAgent(event)">Delete</button>
+            </td>
         </tr>
         {% endfor %}
+        <tr>
+            <form action="/admin" method="POST" role="form" class="form-horizontal">
+                    <td>
+                            <input type="text" id="sipusername" class="form-control"
+                                   placeholder="Enter new sip username" name="sipusername">
+                    </td>
+                    <td>
+                            <button type="submit" class="btn btn-primary">Create</button>
+                    </td>
+            </form>
+        </tr>
+        </tbody>
+    </table>
 
-    </tbody>
-</table>
-
-
-<form action="/admin" method="POST">
-    Create a new SIP Username: <input type="text" name="sipusername">
-    <input type="submit" value="Submit">
-</form>
-
+</div>
 
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
