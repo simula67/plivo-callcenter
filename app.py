@@ -131,6 +131,7 @@ def admin():
 def delete_agent():
     execute_query("DELETE FROM agents WHERE sipusername=%s", request.form['agentUsername'])
     return ""
+
 def generate_forward_response(sip_username):
     plivo_response = plivo.XML.Response()
     plivo_response.addDial(callerId=request.form['From']).addUser("sip:" + sip_username + "@phone.plivo.com")

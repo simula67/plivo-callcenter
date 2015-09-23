@@ -47,7 +47,7 @@ Some screenshots
 
 Admin page
 
-![Admin page](http://i.imgur.com/NHxpRMu.png)
+![Admin page](http://i.imgur.com/kCJc835.png)
 
 Agent page
 
